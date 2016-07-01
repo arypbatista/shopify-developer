@@ -3,25 +3,26 @@ Set of tools for Shopify developers.
 
 ## Features
 
-With
+- Dump site structure to configuration file
+- Install site from configuration file
 
 ## Usage
 
 ### Dumping site structure
 
 ```
-$ shopify dump <shopify-config-file>
+$ shopify dump [<shopify-config-file>]
 ```
 
 ### Setting up site structure
 
 ```
-$ shopify install <shopify-config-file>
+$ shopify install [<shopify-config-file>]
 ```
 
 ## Shopify Config File
 
-Shopify Config file is a yaml file as in example:
+Shopify Config file is a yaml file, named after `site.yml` by default, as in example:
 
 ```yml
 site:
