@@ -17,7 +17,7 @@ $ shopify dump [<shopify-config-file>]
 ### Setting up site structure
 
 ```
-$ shopify install [<shopify-config-file>]
+$ shopify load [<shopify-config-file>]
 ```
 
 ## Shopify Config File
