@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-require './lib/shopify_dev_tools.rb'
-require './lib/shopify_dev_tools/version'
+require 'shopify_dev_tools'
+require 'shopify_dev_tools/version'
 require 'rubygems'
 require 'commander/import'
 
