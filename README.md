@@ -20,6 +20,13 @@ $ shopify dump --file <site-config-file>
 $ shopify load --file <site-config-file>
 ```
 
+### Other commands
+
+Remove all shop data
+```
+$ shopify clear
+```
+
 ## Shopify Config File
 
 Shopify Config file is a yaml file, named after `site.yml` by default, as in example:

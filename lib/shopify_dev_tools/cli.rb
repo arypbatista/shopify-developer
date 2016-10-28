@@ -39,6 +39,27 @@ module ShopifyDevTools
           ShopifyDevTools.load options
         end
       end
+
+      command :clear do |c|
+        c.syntax = 'shopify_dev_tools load [options]'
+        c.summary = 'Load site from configuration file'
+        c.description = 'Load site from configuration file'
+        c.action do |args, options|
+          def ask_continue
+            ask('This will delete all shop data. Are you sure? (y/n): ').strip
+          end
+
+          answer = ask_continue()
+          while !['y', 'n', 'Y', 'N'].include? answer
+            answer = ask_continue()
+          end
+
+          if ['y', 'Y'].include? answer
+            ShopifyDevTools.clear_shop options
+          end
+
+        end
+      end
     end
   end
 end
