@@ -11,13 +11,13 @@ Set of tools for Shopify developers.
 ### Dumping site structure
 
 ```
-$ shopify dump [<shopify-config-file>]
+$ shopify dump --file <site-config-file>
 ```
 
 ### Setting up site structure
 
 ```
-$ shopify load [<shopify-config-file>]
+$ shopify load --file <site-config-file>
 ```
 
 ## Shopify Config File

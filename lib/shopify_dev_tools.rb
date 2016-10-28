@@ -7,6 +7,10 @@ module ShopifyDevTools
     ENV['test']
   end
 
+  def self.debug?
+    ENV['debug']
+  end
+
   def self.config
     @config ||= if File.exist? 'config.yml'
       config = YAML.load(File.read('config.yml'))
@@ -33,6 +37,11 @@ module ShopifyDevTools
   def self.prepare
     self.config
     self.connect_shopify
+
+    if self.debug?
+      puts 'Config:', self.config.to_yaml
+      puts 'Auth URL: ' + self.shop_auth_url
+    end
   end
 
   def self.connect_shopify
@@ -42,8 +51,12 @@ module ShopifyDevTools
   end
 
   def self.load options
-    puts "load not implemented"
-    puts "file " + options.file
+    data = YAML.load(File.read(options.file))
+    data.each do |type, objects|
+      objects.first.save
+      #objects.each { |o| o.save }
+    end
+
   end
 
   def self.dump options

@@ -35,6 +35,7 @@ module ShopifyDevTools
         c.description = 'Load site from configuration file'
         c.option '--file STRING', String, 'YAML file with site data'
         c.action do |args, options|
+          options.default :file => 'site.yml'
           ShopifyDevTools.load options
         end
       end
