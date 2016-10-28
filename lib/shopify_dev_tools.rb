@@ -33,7 +33,6 @@ module ShopifyDevTools
   def self.prepare
     self.config
     self.connect_shopify
-    puts "Shopify Developer Tools initialized"
   end
 
   def self.connect_shopify
@@ -42,13 +41,21 @@ module ShopifyDevTools
     ShopifyAPI
   end
 
-  def self.load
-    puts "load"
-    puts ShopifyAPI::Product.find(:all, :params => {:limit => 10})
+  def self.load options
+    puts "load not implemented"
+    puts "file " + options.file
   end
 
-  def self.dump
-    puts "dump"
+  def self.dump options
+    data = {
+      :Page => ShopifyAPI::Page.find(:all)
+    }
+
+    if options.file
+      File.write options.file, data.to_yaml
+    else
+      puts data.to_yaml
+    end
   end
 
   prepare

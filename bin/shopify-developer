@@ -20,3 +20,5 @@ fallback_load_path(File.join(File.dirname(__FILE__), '..', 'lib')) do
   require 'shopify_dev_tools'
   require 'shopify_dev_tools/cli'
 end
+
+ShopifyDevTools::Cli.run
