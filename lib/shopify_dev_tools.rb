@@ -30,17 +30,19 @@ module ShopifyDevTools
     "https://#{@config[:api_key]}:#{@config[:password]}@#{@config[:store]}/admin"
   end
 
-  def self.connect_shopify
+  def self.prepare
     self.config
+    self.connect_shopify
+    puts "Shopify Developer Tools initialized"
+  end
+
+  def self.connect_shopify
     shop_url = self.shop_auth_url
-    puts shop_url
     ShopifyAPI::Base.site = shop_url
     ShopifyAPI
-    puts "ShopifyAPI prepared"
   end
 
   def self.load
-    self.connect_shopify
     puts "load"
     puts ShopifyAPI::Product.find(:all, :params => {:limit => 10})
   end
@@ -49,4 +51,5 @@ module ShopifyDevTools
     puts "dump"
   end
 
+  prepare
 end
