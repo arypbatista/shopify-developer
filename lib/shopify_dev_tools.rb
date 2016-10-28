@@ -27,12 +27,13 @@ module ShopifyDevTools
   end
 
   def self.shop_auth_url
-    "https://#{@config[:api_key]}:#{@config[:password]}@#{:store}/admin"
+    "https://#{@config[:api_key]}:#{@config[:password]}@#{@config[:store]}/admin"
   end
 
   def self.connect_shopify
     self.config
     shop_url = self.shop_auth_url
+    puts shop_url
     ShopifyAPI::Base.site = shop_url
     ShopifyAPI
     puts "ShopifyAPI prepared"
