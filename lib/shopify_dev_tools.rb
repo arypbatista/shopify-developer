@@ -1,4 +1,5 @@
 require 'shopify_api'
+require 'shopify_dev_tools/config'
 require 'shopify_dev_tools/extend_api'
 require 'shopify_dev_tools/item_types'
 require 'shopify_dev_tools/shop_loader'
@@ -7,6 +8,8 @@ require 'yaml'
 module ShopifyDevTools
 
   @@log = Logger.new(STDOUT)
+  @@env = :development
+  @@config_format = :themekit
 
   def self.debug message
     if self.debug?
@@ -24,13 +27,7 @@ module ShopifyDevTools
 
   def self.config
     @config ||= if File.exist? 'config.yml'
-      config = YAML.load(File.read('config.yml'))
-
-      if !config[:store].end_with?('.myshopify.com')
-        config[:store] = config[:store] + '.myshopify.com'
-      end
-
-      config
+      config = Config.new 'config.yml', @@config_format, @@env
     else
       puts "config.yml does not exist!" unless test?
       {}
@@ -41,11 +38,9 @@ module ShopifyDevTools
     @config = config
   end
 
-  def self.shop_auth_url
-    "https://#{@config[:api_key]}:#{@config[:password]}@#{@config[:store]}/admin"
-  end
-
-  def self.prepare
+  def self.prepare options
+    @@config_format = options.config_format
+    @@env = options.env
     self.config
     self.connect_shopify
 
@@ -53,13 +48,12 @@ module ShopifyDevTools
       require 'activeresource'
       ActiveResource::Base.logger = Logger.new(STDERR)
       puts 'Config:', self.config.to_yaml
-      puts 'Auth URL: ' + self.shop_auth_url
+      puts 'Auth URL: ' + @config.auth_url
     end
   end
 
   def self.connect_shopify
-    shop_url = self.shop_auth_url
-    ShopifyAPI::Base.site = shop_url
+    ShopifyAPI::Base.site = @config.auth_url
     ShopifyAPI
   end
 
@@ -109,5 +103,4 @@ module ShopifyDevTools
     end
   end
 
-  prepare
 end

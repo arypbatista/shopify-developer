@@ -34,48 +34,95 @@ module ShopifyDevTools
       end
     end
 
+    def process_options options
+      process_types options
+
+      if options.config_format
+        sym_config_format = options.config_format.to_sym
+        if [:themekit, :shopify_theme].include? sym_config_format
+          options.config_format = sym_config_format
+        else
+          raise "Invalid config format '#{sym_config_format}'."
+        end
+      else
+        options.config_format = :themekit
+      end
+
+      if options.env
+        options.env = options.env.to_sym
+      else
+        options.env = :development
+      end
+
+      options
+    end
+
+    def common_options c
+      c.option '--config-format STRING', String, 'Config file format. Options: themekit, shopify_theme. Default: themekit'
+      c.option '--env STRING', String, 'Environment. Default is development.'
+    end
+
     def run
       program :name, 'shopify_dev_tools'
       program :version, ShopifyDevTools::VERSION
       program :description, 'Developer tools for Shopify developers'
 
       command :test_cli do |c|
+        common_options c
+
         c.syntax = 'shopify_dev_tools test_cli [options]'
         c.summary = 'Test cli usage'
-        c.option '--update-only', 'Only update existing items. Items are identified by handle.'
+        c.option '--update-only', 'Only update existing items. Items are searched by handle.'
+        c.option '--metafields-only', 'Only update metafields. Items are searched by handle.'
         c.description = 'Test cli usage'
         c.action do |args, options|
-          puts options.update_only
+          if options.metafields_only
+            options.update_only = true
+          end
         end
       end
 
       command :dump do |c|
+        common_options c
+
         c.syntax = 'shopify_dev_tools dump [options]'
         c.summary = 'Dump site structure to configuration file'
         c.option '--file STRING', String, 'YAML file with site data'
         c.option '--types WORDS', Array, 'Item types to process. E.g.: Page, Product'
         c.description = 'Dump site structure to configuration file'
         c.action do |args, options|
-          check_types options
+          process_options options
+          ShopifyDevTools.prepare options
           ShopifyDevTools.dump options
         end
       end
 
       command :load do |c|
+        common_options c
+
         c.syntax = 'shopify_dev_tools load [options]'
         c.summary = 'Load site from configuration file'
         c.description = 'Load site from configuration file'
         c.option '--file STRING', String, 'YAML file with site data'
         c.option '--types WORDS', Array, 'Item types to process. E.g.: Page, Product'
-        c.option '--update-only', 'Only update existing items. Items are identified by handle.'
+        c.option '--update-only', 'Only update existing items. Items are searched by handle.'
+        c.option '--metafields-only', 'Only update metafields. Items are searched by handle.'
         c.action do |args, options|
-          process_types options
+          process_options options
+
+          if options.metafields_only
+            options.update_only = true
+          end
+
           options.default :file => 'site.yml'
+          ShopifyDevTools.prepare options
           ShopifyDevTools.load options
         end
       end
 
       command :clear do |c|
+        common_options c
+
         c.syntax = 'shopify_dev_tools load [options]'
         c.summary = 'Load site from configuration file'
         c.description = 'Load site from configuration file'
@@ -83,7 +130,8 @@ module ShopifyDevTools
         c.action do |args, options|
 
           if ask_yes_or_no("This will delete all shop data on #{ShopifyDevTools.config[:store]}. Are you sure? (y/n): ")
-            process_types options
+            process_options options
+            ShopifyDevTools.prepare options
             ShopifyDevTools.clear_shop options
           end
 

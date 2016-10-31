@@ -65,8 +65,10 @@ module ShopifyDevTools
           end
 
           begin
-            item.save
-            @id_replacements[old_id] = item.id
+            if !@options.metafields_only
+              item.save
+              @id_replacements[old_id] = item.id
+            end
             self.load_metafields item, type, old_id, data
 
           rescue => e
