@@ -64,30 +64,47 @@ module ShopifyDevTools
   end
 
   def self.load options
+    shop = ShopifyAPI::Shop.current
     data = YAML.load(File.read(options.file))
 
     id_replaces = {}
 
-    load_order = [:Page, :Product, :Metafield]
+    load_order = [:Shop, :Metafield, :Page, :Product].select { |x| data.key? x }
 
-    collections = load_order
-      .select { |x| data.key? x }
-      .map { |type| data[type] }
+    load_order.each do |type|
 
-    collections.each do |collection|
-      collection.each do |object|
+      if type == :Shop
+        old_shop = data[type]
+        id_replaces[old_shop.id] = shop.id
 
-        if object.has_attribute? :owner_id and id_replaces.key? object.owner_id
-          object.owner_id = id_replaces[object.owner_id]
-        end
+      else
+        collection = data[type]
+        collection.each do |object|
 
-        begin
-          object.save
-        rescue
+          if object.has_attribute? :owner_id and id_replaces.key? object.owner_id
+            object.owner_id = id_replaces[object.owner_id]
+          end
+
           old_id = object.id
           object.id = nil
-          object.save
-          id_replaces[old_id] = object.id
+
+          if type == :Metafield
+            new_object = object
+            new_object.owner_id = nil
+            new_object.id = nil
+            new_object.owner_resource = nil
+          else
+            new_object = object
+          end
+
+
+          begin
+            new_object.save
+            id_replaces[old_id] = new_object.id
+          rescue => e
+            puts "Error to save object #{type} with id #{old_id}."
+            puts e.backtrace
+          end
         end
       end
     end
@@ -96,10 +113,26 @@ module ShopifyDevTools
 
   def self.dump options
     data = {
+      :Shop => ShopifyAPI::Shop.current,
       :Page => ShopifyAPI::Page.find(:all),
       :Product => ShopifyAPI::Product.find(:all),
-      :Metafield => ShopifyAPI::Metafield.find(:all)
+      :Metafield => {}
     }
+
+    [:Shop, :Page, :Product].each do |type|
+      data[:Metafield][type] = {}
+
+      metafields = data[:Metafield][type]
+
+      if data[type].kind_of? ActiveResource::Collection
+        data[type].each do |item|
+          metafields[item.id] = item.metafields
+        end
+      else
+        item = data[type]
+        metafields[item.id] = item.metafields
+      end
+    end
 
     if options.file
       File.write options.file, data.to_yaml
