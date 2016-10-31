@@ -68,8 +68,13 @@ module ShopifyDevTools
 
     id_replaces = {}
 
-    load_order = [data[:Page], data[:Product]]
-    load_order.each do |collection|
+    load_order = [:Page, :Product, :Metafield]
+
+    collections = load_order
+      .select { |x| data.key? x }
+      .map { |type| data[type] }
+
+    collections.each do |collection|
       collection.each do |object|
 
         if object.has_attribute? :owner_id and id_replaces.key? object.owner_id
@@ -92,7 +97,8 @@ module ShopifyDevTools
   def self.dump options
     data = {
       :Page => ShopifyAPI::Page.find(:all),
-      :Product => ShopifyAPI::Product.find(:all)
+      :Product => ShopifyAPI::Product.find(:all),
+      :Metafield => ShopifyAPI::Metafield.find(:all)
     }
 
     if options.file

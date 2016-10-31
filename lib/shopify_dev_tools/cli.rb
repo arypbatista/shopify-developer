@@ -46,7 +46,7 @@ module ShopifyDevTools
         c.description = 'Load site from configuration file'
         c.action do |args, options|
           def ask_continue
-            ask('This will delete all shop data. Are you sure? (y/n): ').strip
+            ask("This will delete all shop data on #{ShopifyDevTools.config[:store]}. Are you sure? (y/n): ").strip
           end
 
           answer = ask_continue()
