@@ -48,4 +48,4 @@ path/to/shop-develop$ cd path/to/shop-prod
 path/to/shop-prod$ shopify_dev_tools load
 ```
 
-This is the basic example and use case for the tool. For more options see the [General Command Options](#general-command-options) section or dive into each specific command documentation on this readme.
+This is the basic example and use case for the tool. For more options see the [General Command Options](#general-command-options) section, dive into each specific command documentation on this readme or simply try `shopify_dev_tools --help`.
