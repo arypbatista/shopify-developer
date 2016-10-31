@@ -13,4 +13,12 @@ module ShopifyAPI
     end
 
   end
+
+  class Metafield
+
+    def full_name
+      "#{@namespace}:#{@key}"
+    end
+
+  end
 end

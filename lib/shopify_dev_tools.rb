@@ -1,9 +1,18 @@
 require 'shopify_api'
 require 'shopify_dev_tools/extend_api'
+require 'shopify_dev_tools/item_types'
 require 'shopify_dev_tools/shop_loader'
 require 'yaml'
 
 module ShopifyDevTools
+
+  @@log = Logger.new(STDOUT)
+
+  def self.debug message
+    if self.debug?
+      @@log.debug message
+    end
+  end
 
   def self.test?
     ENV['test']
@@ -65,11 +74,12 @@ module ShopifyDevTools
   end
 
   def self.load options
-    loader = ShopLoader.new
+    loader = ShopLoader.new options
     loader.load_data YAML.load(File.read(options.file))
   end
 
   def self.dump options
+
     data = {
       :Shop => ShopifyAPI::Shop.current,
       :Page => ShopifyAPI::Page.find(:all),
