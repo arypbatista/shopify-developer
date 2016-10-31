@@ -1,5 +1,6 @@
 require 'shopify_api'
 require 'shopify_dev_tools/extend_api'
+require 'shopify_dev_tools/shop_loader'
 require 'yaml'
 
 module ShopifyDevTools
@@ -64,51 +65,8 @@ module ShopifyDevTools
   end
 
   def self.load options
-    shop = ShopifyAPI::Shop.current
-    data = YAML.load(File.read(options.file))
-
-    id_replaces = {}
-
-    load_order = [:Shop, :Metafield, :Page, :Product].select { |x| data.key? x }
-
-    load_order.each do |type|
-
-      if type == :Shop
-        old_shop = data[type]
-        id_replaces[old_shop.id] = shop.id
-
-      else
-        collection = data[type]
-        collection.each do |object|
-
-          if object.has_attribute? :owner_id and id_replaces.key? object.owner_id
-            object.owner_id = id_replaces[object.owner_id]
-          end
-
-          old_id = object.id
-          object.id = nil
-
-          if type == :Metafield
-            new_object = object
-            new_object.owner_id = nil
-            new_object.id = nil
-            new_object.owner_resource = nil
-          else
-            new_object = object
-          end
-
-
-          begin
-            new_object.save
-            id_replaces[old_id] = new_object.id
-          rescue => e
-            puts "Error to save object #{type} with id #{old_id}."
-            puts e.backtrace
-          end
-        end
-      end
-    end
-
+    loader = ShopLoader.new
+    loader.load_data YAML.load(File.read(options.file))
   end
 
   def self.dump options
