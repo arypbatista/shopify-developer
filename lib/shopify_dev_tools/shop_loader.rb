@@ -6,7 +6,7 @@ module ShopifyDevTools
       @shop = ShopifyAPI::Shop.current
       @id_replacements = {}
       @options = options
-
+      @old_data = {}
     end
 
     def load_metafields item, type, old_id, data
@@ -44,6 +44,15 @@ module ShopifyDevTools
       end
     end
 
+    def get_old_data type, item
+      if @old_data_hashed.key? type and item.attributes.key? :handle
+        #ShopifyDevTools::get_type(type).find(:all, :params => { :handle => data_item.handle }).first
+        @old_data_hashed[type].fetch item.handle, false
+      else
+        false
+      end
+    end
+
     def load_item data_item, type, data
       if type == :Shop
         @id_replacements[data_item.id] = @shop.id
@@ -57,7 +66,7 @@ module ShopifyDevTools
           old_variant_images = data_item.variants.map { |v| v.image_id }
         end
 
-        item = ShopifyDevTools::get_type(type).find(:all, :params => { :handle => data_item.handle }).first
+        item = get_old_data type, data_item
         if !item and !@options.update_only
           item = ShopifyDevTools::get_type(type).new
         end
@@ -98,14 +107,30 @@ module ShopifyDevTools
             self.load_metafields item, type, old_id, data
 
           rescue => e
-            puts "Error to save object #{type} with id #{old_id}."
+            puts "Error to save object #{type} with id #{old_id}. Error: #{e.message}"
             puts e.backtrace
           end
         end
       end
     end
 
+    def download_old_data
+      dumper = ShopDumper.new @options
+      @old_data = dumper.download_data
+      @old_data_hashed = {}
+      @old_data.each do |type, items|
+        @old_data_hashed[type] = {}
+        if items.kind_of? ActiveResource::Collection
+          items.each do |item|
+            @old_data_hashed[type][item.handle] = item
+          end
+        end
+      end
+
+    end
+
     def load_data data
+      self.download_old_data
 
       load_order = [:Shop, :Page, :Product]
         .select { |type| data.key? type and @options.types.include? type }

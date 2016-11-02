@@ -1,11 +1,16 @@
 module ShopifyDevTools
   class Config
 
+    attr_accessor :store
+
     def initialize filepath, config_format, env
       @data = YAML.load(File.read(filepath))
       begin
         if config_format == :themekit
           data = @data[env.to_s]
+          if !data
+            raise "Not valid configuration found for #{env} environment."
+          end
           @store = data['store']
           @password = data['password']
           @api_key = data['api_key']

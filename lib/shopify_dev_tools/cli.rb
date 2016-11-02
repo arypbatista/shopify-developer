@@ -134,9 +134,9 @@ module ShopifyDevTools
         c.option '--types WORDS', Array, 'Item types to process. E.g.: Page, Product'
         c.action do |args, options|
 
-          if ask_yes_or_no("This will delete all shop data on #{ShopifyDevTools.config[:store]}. Are you sure? (y/n): ")
-            process_options options
-            ShopifyDevTools.prepare options
+          process_options options
+          ShopifyDevTools.prepare options
+          if ask_yes_or_no("This will delete all shop data on #{ShopifyDevTools.config.store}. Are you sure? (y/n): ")
             ShopifyDevTools.clear_shop options
           end
 

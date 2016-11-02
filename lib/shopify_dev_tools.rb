@@ -3,14 +3,15 @@ require 'shopify_dev_tools/config'
 require 'shopify_dev_tools/extend_api'
 require 'shopify_dev_tools/item_types'
 require 'shopify_dev_tools/shop_loader'
+require 'shopify_dev_tools/shop_dumper'
 require 'yaml'
 
 module ShopifyDevTools
 
   @@log = Logger.new(STDOUT)
-  @@env = :development
-  @@config_format = :themekit
-  @@config_path = './config.yml'
+  @@env = nil
+  @@config_format = nil
+  @@config_path = nil
 
   def self.debug message
     if self.debug?
@@ -27,6 +28,10 @@ module ShopifyDevTools
   end
 
   def self.config
+    if self.debug?
+      puts "Config file set to '#{@@config_path}'."
+    end
+
     @config ||= if File.exist? @@config_path
       config = Config.new @@config_path, @@config_format, @@env
     else
@@ -75,34 +80,8 @@ module ShopifyDevTools
   end
 
   def self.dump options
-
-    data = {
-      :Shop => ShopifyAPI::Shop.current,
-      :Page => ShopifyAPI::Page.find(:all),
-      :Product => ShopifyAPI::Product.find(:all),
-      :Metafield => {}
-    }
-
-    [:Shop, :Page, :Product].each do |type|
-      data[:Metafield][type] = {}
-
-      metafields = data[:Metafield][type]
-
-      if data[type].kind_of? ActiveResource::Collection
-        data[type].each do |item|
-          metafields[item.id] = item.metafields
-        end
-      else
-        item = data[type]
-        metafields[item.id] = item.metafields
-      end
-    end
-
-    if options.file
-      File.write options.file, data.to_yaml
-    else
-      puts data.to_yaml
-    end
+    dumper = ShopDumper.new options
+    dumper.dump
   end
 
 end
