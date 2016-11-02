@@ -10,6 +10,7 @@ module ShopifyDevTools
   @@log = Logger.new(STDOUT)
   @@env = :development
   @@config_format = :themekit
+  @@config_path = './config.yml'
 
   def self.debug message
     if self.debug?
@@ -26,10 +27,10 @@ module ShopifyDevTools
   end
 
   def self.config
-    @config ||= if File.exist? 'config.yml'
-      config = Config.new 'config.yml', @@config_format, @@env
+    @config ||= if File.exist? @@config_path
+      config = Config.new @@config_path, @@config_format, @@env
     else
-      puts "config.yml does not exist!" unless test?
+      puts "Configuration file '#{@@config_path}' does not exist!" unless test?
       {}
     end
   end
@@ -40,6 +41,7 @@ module ShopifyDevTools
 
   def self.prepare options
     @@config_format = options.config_format
+    @@config_path = options.config
     @@env = options.env
     self.config
     self.connect_shopify

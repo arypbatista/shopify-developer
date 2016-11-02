@@ -52,6 +52,11 @@ module ShopifyDevTools
 
         old_id = data_item.id
 
+        if type == :Product
+          old_images_ids = data_item.images.map { |img| img.id }
+          old_variant_images = data_item.variants.map { |v| v.image_id }
+        end
+
         item = ShopifyDevTools::get_type(type).find(:all, :params => { :handle => data_item.handle }).first
         if !item and !@options.update_only
           item = ShopifyDevTools::get_type(type).new
@@ -68,6 +73,27 @@ module ShopifyDevTools
             if !@options.metafields_only
               item.save
               @id_replacements[old_id] = item.id
+
+              if type == :Product
+                for i in 0...old_images_ids.size
+                  old_id = old_images_ids[i]
+                  new_id = item.images[i].id
+                  @id_replacements[old_id] = new_id
+                end
+
+                # Update variant images since they have changed on first save
+                if old_variant_images.size > 1
+                  for i in 0...old_variant_images.size
+                    old_id = old_variant_images[i]
+                    if @id_replacements.key? old_id
+                      new_id = @id_replacements[old_id]
+                      item.variants[i].image_id = new_id
+                    end
+                  end
+                  item.save
+                end
+
+              end
             end
             self.load_metafields item, type, old_id, data
 

@@ -54,12 +54,17 @@ module ShopifyDevTools
         options.env = :development
       end
 
+      if !options.config
+        options.config = './config.yml'
+      end
+
       options
     end
 
     def common_options c
       c.option '--config-format STRING', String, 'Config file format. Options: themekit, shopify_theme. Default: themekit'
       c.option '--env STRING', String, 'Environment. Default is development.'
+      c.option '--config STRING', String, 'Path to config file. Default is ./config.yml'
     end
 
     def run
