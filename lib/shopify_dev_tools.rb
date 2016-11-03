@@ -51,9 +51,12 @@ module ShopifyDevTools
     self.config
     self.connect_shopify
 
-    if self.debug?
+    if options.verbose
       require 'activeresource'
       ActiveResource::Base.logger = Logger.new(STDERR)
+    end
+
+    if self.debug?
       puts 'Config:', self.config.to_yaml
       puts 'Auth URL: ' + @config.auth_url
     end

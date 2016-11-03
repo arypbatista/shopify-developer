@@ -37,6 +37,14 @@ module ShopifyDevTools
     def process_options options
       process_types options
 
+      if options.create_only and options.update_only
+        raise 'Invalid option setting. Use either --update-only or --create-only.'
+      end
+
+      if options.metafields_only and !options.create_only
+        options.update_only = true
+      end
+
       if options.config_format
         sym_config_format = options.config_format.to_sym
         if [:themekit, :shopify_theme].include? sym_config_format
@@ -65,6 +73,7 @@ module ShopifyDevTools
       c.option '--config-format STRING', String, 'Config file format. Options: themekit, shopify_theme. Default: themekit'
       c.option '--env STRING', String, 'Environment. Default is development.'
       c.option '--config STRING', String, 'Path to config file. Default is ./config.yml'
+      c.option '--verbose', 'Enable verbose mode.'
     end
 
     def run
@@ -81,9 +90,7 @@ module ShopifyDevTools
         c.option '--metafields-only', 'Only update metafields. Items are searched by handle.'
         c.description = 'Test cli usage'
         c.action do |args, options|
-          if options.metafields_only
-            options.update_only = true
-          end
+
         end
       end
 
@@ -109,15 +116,16 @@ module ShopifyDevTools
         c.summary = 'Load site from configuration file'
         c.description = 'Load site from configuration file'
         c.option '--file STRING', String, 'YAML file with site data'
-        c.option '--types WORDS', Array, 'Item types to process. E.g.: Page, Product'
-        c.option '--update-only', 'Only update existing items. Items are searched by handle.'
-        c.option '--metafields-only', 'Only update metafields. Items are searched by handle.'
+        c.option '--types WORDS', Array, 'Item types to process. E.g.: Page, ' +
+                                         'Product'
+        c.option '--update-only', 'Only update existing items. Items are ' +
+                                  'searched by handle.'
+        c.option '--create-only', 'Only create. Items won\'t be created if ' +
+                                  'there is already an item with same handle'
+        c.option '--metafields-only', 'Only update metafields. Items are ' +
+                                      'searched by handle.'
         c.action do |args, options|
           process_options options
-
-          if options.metafields_only
-            options.update_only = true
-          end
 
           options.default :file => 'site.yml'
           ShopifyDevTools.prepare options
