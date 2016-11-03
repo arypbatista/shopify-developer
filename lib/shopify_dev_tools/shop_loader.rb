@@ -11,43 +11,48 @@ module ShopifyDevTools
     end
 
     def load_metafields item, type, old_id, data
-      if data.key? :Metafield and
-         data[:Metafield].key? type and
-         data[:Metafield][type].key? old_id
+      if data.key? :Metafield
+        if data[:Metafield].key? type and
+           data[:Metafield][type].key? old_id
 
-        new_metafields = data[:Metafield][type][old_id]
+          new_metafields = data[:Metafield][type][old_id]
 
-        old_metafields = item.metafields
+          old_metafields = item.metafields
 
-        old_metafields_hash = old_metafields
-          .map { |m| ["#{m.namespace}:#{m.key}", m] }
-          .to_h
+          old_metafields_hash = old_metafields
+            .map { |m| ["#{m.namespace}:#{m.key}", m] }
+            .to_h
 
-        new_metafields.each do |new_metafield|
-          new_created = false
-          metafield = old_metafields_hash.fetch new_metafield.full_name, false
-          if !metafield
-            metafield = ShopifyAPI::Metafield.new
-            new_created = true
-          end
+          new_metafields.each do |new_metafield|
+            new_created = false
+            metafield = old_metafields_hash.fetch new_metafield.full_name, false
+            if !metafield
+              metafield = ShopifyAPI::Metafield.new
+              new_created = true
+            end
 
-          if !new_created and @options.create_only
-            puts "Metafield #{metafield.full_name} was ignored since flag " +
-                 "--create-only was set."
-          else
-            metafield.namespace = new_metafield.namespace
-            metafield.key = new_metafield.key
-            metafield.value = new_metafield.value
-            metafield.value_type = new_metafield.value_type
-            begin
-              item.add_metafield(metafield)
-            rescue => e
-              puts "Error to save object metafield #{type} with id #{new_metafield.id} (object: #{old_id})."
-              puts e.backtrace
+            if !new_created and @options.create_only
+              puts "Metafield #{metafield.full_name} was ignored since flag " +
+                   "--create-only was set."
+            else
+              metafield.namespace = new_metafield.namespace
+              metafield.key = new_metafield.key
+              metafield.value = new_metafield.value
+              metafield.value_type = new_metafield.value_type
+              begin
+                item.add_metafield(metafield)
+              rescue => e
+                puts "Error to save object metafield #{type} with id #{new_metafield.id} (object: #{old_id})."
+                puts e.backtrace
+              end
             end
           end
         end
 
+        if type == :Product and data[:Metafield].key? :Image
+          changed = self.set_product_image_metafields item, data[:Metafield][:Image]
+          item.save if changed
+        end
       end
     end
 
@@ -55,6 +60,56 @@ module ShopifyDevTools
       if @old_data_hashed.key? type and item.attributes.key? :handle
         #ShopifyDevTools::get_type(type).find(:all, :params => { :handle => item.handle }).first
         @old_data_hashed[type].fetch item.handle, false
+      else
+        false
+      end
+    end
+
+    def set_product_image_metafields item, image_metafields
+      changed = false
+      if image_metafields.key? item.handle
+        item.images.each do |image|
+          if image_metafields[item.handle].key? image.text_id
+            final_metafields = []
+            new_metafields = image_metafields[item.handle][image.text_id]
+            old_metafields = image.metafields or []
+            old_metafields_hash = old_metafields
+              .map { |m| ["#{m.namespace}:#{m.key}", m] }
+              .to_h
+
+            new_metafields.each do |new_metafield|
+              metafield = old_metafields_hash.fetch new_metafield.full_name, false
+              if !metafield
+                metafield = ShopifyAPI::Metafield.new
+              end
+
+              metafield.namespace = new_metafield.namespace
+              metafield.key = new_metafield.key
+              metafield.value = new_metafield.value
+              metafield.value_type = new_metafield.value_type
+
+              final_metafields << metafield
+            end
+
+            image.metafields = final_metafields
+            changed = true
+          end
+        end
+      end
+      changed
+    end
+
+    def set_product_variant_images item, old_variant_images_ids
+      # Update variant images since they have changed on first save
+      if old_variant_images_ids.size > 1 # If only one variant, do nothing
+        for i in 0...old_variant_images_ids.size
+          old_id = old_variant_images_ids[i]
+          if @id_replacements.key? old_id
+            new_id = @id_replacements[old_id]
+            item.variants[i].image_id = new_id
+          end
+        end
+        true
       else
         false
       end
@@ -79,11 +134,7 @@ module ShopifyDevTools
         end
 
         if item
-          data_item.attributes.each do |attr_name, attr_value|
-            if ![:id].include? attr_name.to_sym
-              item.send("#{attr_name}=", attr_value)
-            end
-          end
+          item.copy_from data_item
 
           begin
             if !@options.metafields_only
@@ -107,19 +158,8 @@ module ShopifyDevTools
                       puts "\t#{old_id} => #{new_id}"
                       @id_replacements[old_id] = new_id
                     end
-
-                    # Update variant images since they have changed on first save
-                    if old_variant_images.size > 1
-                      for i in 0...old_variant_images.size
-                        old_id = old_variant_images[i]
-                        if @id_replacements.key? old_id
-                          new_id = @id_replacements[old_id]
-                          item.variants[i].image_id = new_id
-                        end
-                      end
-                      puts "SAVED AGAIN!"
-                      item.save
-                    end
+                    changes = self.set_product_variant_images item, old_variant_images
+                    item.save if changes
                   end
                 rescue => e
                   puts "Error to save variants for #{type} with id #{old_id}.\nError: #{e.message}"

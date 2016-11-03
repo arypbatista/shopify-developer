@@ -4,9 +4,10 @@ module ShopifyDevTools
 
     def initialize options
       @options = options
+      @dump_types = [:Shop, :Page, :Product]
     end
 
-    def download_data types
+    def download_data types=@dump_types
       data = {}
       types.each do |type|
         if type == :Shop
@@ -42,20 +43,19 @@ module ShopifyDevTools
     def download_product_image_metafields data
       image_metafields = {}
       data[:Product].each do |product|
+        image_metafields[product.handle] = {}
         product.images.each do |image|
-          image_metafields[image.id] = ShopifyAPI::Metafield.find(:all,
-            :params => {
-                :metafield => {
-                  :owner_id => image.id,
-                  :owner_resource => 'product_image'
-                }
-              })
+          if image.text_id
+            image_metafields[product.handle][image.text_id] = image.metafields
+          else
+            raise "Image could not calcualte text_id for image: #{image.to_yaml}"
+          end
         end
       end
       image_metafields
     end
 
-    def download_metafields types, data
+    def download_metafields data, types=@dump_types
       all_metafields = {}
       types.each do |type|
         all_metafields[type] = self.download_metafields_for_type type, data
@@ -75,9 +75,8 @@ module ShopifyDevTools
     end
 
     def dump
-      dump_types = [:Shop, :Page, :Product]
-      data = self.download_data dump_types
-      data[:Metafield] = self.download_metafields dump_types, data
+      data = self.download_data
+      data[:Metafield] = self.download_metafields data
       self.write_data data, @options.file
     end
 
