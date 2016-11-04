@@ -49,7 +49,7 @@ module ShopifyAPI
       end
     end
 
-    def metafields
+    def get_metafields
       ShopifyAPI::Metafield.find(:all,
         :params => {
             :metafield => {
@@ -57,11 +57,6 @@ module ShopifyAPI
               :owner_resource => 'product_image'
             }
           })
-    end
-
-    def add_metafields metafields
-      self.write_attribute(:metafields, metafields)
-      self.save
     end
 
   end

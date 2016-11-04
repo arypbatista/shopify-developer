@@ -48,11 +48,6 @@ module ShopifyDevTools
             end
           end
         end
-
-        if type == :Product and data[:Metafield].key? :Image
-          changed = self.set_product_image_metafields item, data[:Metafield][:Image]
-          item.save if changed
-        end
       end
     end
 
@@ -66,13 +61,12 @@ module ShopifyDevTools
     end
 
     def set_product_image_metafields item, image_metafields
-      changed = false
       if image_metafields.key? item.handle
         item.images.each do |image|
           if image_metafields[item.handle].key? image.text_id
             final_metafields = []
             new_metafields = image_metafields[item.handle][image.text_id]
-            old_metafields = image.metafields or []
+            old_metafields = image.get_metafields || []
             old_metafields_hash = old_metafields
               .map { |m| ["#{m.namespace}:#{m.key}", m] }
               .to_h
@@ -92,11 +86,9 @@ module ShopifyDevTools
             end
 
             image.metafields = final_metafields
-            changed = true
           end
         end
       end
-      changed
     end
 
     def set_product_variant_images item, old_variant_images_ids
@@ -138,6 +130,13 @@ module ShopifyDevTools
 
           begin
             if !@options.metafields_only
+
+
+              if type == :Product and data.key? :Metafield and
+                 data[:Metafield].key? :Image
+
+                self.set_product_image_metafields item, data[:Metafield][:Image]
+              end
 
               item.save
 
