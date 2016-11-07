@@ -46,7 +46,7 @@ module ShopifyDevTools
         image_metafields[product.handle] = {}
         product.images.each do |image|
           if image.text_id
-            image_metafields[product.handle][image.text_id] = image.metafields
+            image_metafields[product.handle][image.text_id] = image.get_metafields
           else
             raise "Image could not calcualte text_id for image: #{image.to_yaml}"
           end
