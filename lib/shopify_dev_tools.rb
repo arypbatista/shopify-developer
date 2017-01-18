@@ -78,8 +78,12 @@ module ShopifyDevTools
   end
 
   def self.load options
-    loader = ShopLoader.new options
-    loader.load_data YAML.load(File.read(options.file))
+    if @config.readonly
+      raise 'Environment is readonly. Loading action aborted.'
+    else
+      loader = ShopLoader.new options
+      loader.load_data YAML.load(File.read(options.file))
+    end
   end
 
   def self.dump options

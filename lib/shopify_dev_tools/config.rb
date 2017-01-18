@@ -1,7 +1,7 @@
 module ShopifyDevTools
   class Config
 
-    attr_accessor :store
+    attr_accessor :store, :readonly, :theme_id
 
     def initialize filepath, config_format, env
       @data = YAML.load(File.read(filepath))
@@ -15,6 +15,7 @@ module ShopifyDevTools
           @password = data['password']
           @api_key = data['api_key']
           @theme_id = data['theme_id']
+          @readonly = data['readonly']
         elsif config_format == :shopify_theme
           if !@data[:store].end_with?('.myshopify.com')
             @data[:store] = @data[:store] + '.myshopify.com'
@@ -23,6 +24,7 @@ module ShopifyDevTools
           @password = @data[:password]
           @api_key = @data[:api_key]
           @theme_id = @data[:theme_id]
+          @readonly = data[:readonly]
         else
           raise "Invalid config format #{options.config_format}'"
         end
