@@ -4,7 +4,8 @@ module ShopifyDevTools
 
     def initialize options
       @options = options
-      @dump_types = [:Shop, :Page, :Product]
+      @dump_types = [:CustomCollection, :Collect, :Shop, :Page, :Product]
+      @types_with_metafields = [:Shop, :Page, :Product, :CustomCollection]
     end
 
     def download_data types=@dump_types
@@ -58,9 +59,11 @@ module ShopifyDevTools
     def download_metafields data, types=@dump_types
       all_metafields = {}
       types.each do |type|
-        all_metafields[type] = self.download_metafields_for_type type, data
-        if type == :Product
-          all_metafields[:Image] = self.download_product_image_metafields data
+        if @types_with_metafields.include? type
+          all_metafields[type] = self.download_metafields_for_type type, data
+          if type == :Product
+            all_metafields[:Image] = self.download_product_image_metafields data
+          end
         end
       end
       all_metafields
